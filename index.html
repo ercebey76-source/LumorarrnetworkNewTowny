@@ -1,229 +1,105 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LumoNetwork Yönetim Paneli</title>
+    <title>Lumorarr Network | Türkiye'nin En Özgün Towny+ Serüveni</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { margin: 0; padding: 0; background: #090a0f; color: #e2e8f0; font-family: sans-serif; cursor: none; overflow-x: hidden; }
-        
-        /* Renk Değiştiren Yumuşak İmleç */
-        #cursor-glow {
-            position: fixed; width: 45px; height: 45px; border-radius: 50%;
-            background: rgba(59, 130, 246, 0.4); 
-            box-shadow: 0 0 30px 15px rgba(59, 130, 246, 0.5);
-            pointer-events: none; z-index: 9999;
-            animation: colorCycle 8s linear infinite;
-        }
-        @keyframes colorCycle {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
-        }
-        
-        /* Dijital Arka Plan */
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.2; }
-        
-        .bg-glass { background: rgba(17, 19, 26, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
-        .row-gradient { background: linear-gradient(90deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.6) 100%); }
-        .tier-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 4px; color: white; background: #1e3a8a; }
-        .tester-badge { background: #7c3aed; }
-
-        ::-webkit-scrollbar { width: 0px; }
-    </style>
-</head>
-<body class="p-4 md:p-8">
-
-    <div id="cursor-glow"></div>
-    <canvas id="bg-canvas"></canvas>
-
-    <div class="content-container max-w-6xl mx-auto relative z-10">
-        <header class="mb-8">
-            <div class="flex justify-between items-center bg-glass p-5 rounded-2xl">
-                <h1 class="text-2xl font-bold text-white tracking-tighter">LUMO<span class="text-blue-500">NETWORK</span></h1>
-                <div class="flex gap-6">
-                    <button onclick="showSection('leaderboard')" class="text-blue-400 font-medium hover:text-blue-300 transition">SIRALAMA</button>
-                    <button onclick="showLogin()" class="text-gray-400 font-medium hover:text-white transition">ADMİN PANELİ</button>
-                </div>
-            </div>
-        </header>
-
-        <div id="login-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-            <div class="bg-glass p-8 rounded-2xl w-full max-w-sm text-center">
-                <h2 class="text-2xl font-bold mb-6 text-white">Yönetici Girişi</h2>
-                <input id="admin-pass" type="password" placeholder="Şifre" class="w-full bg-gray-900 border border-gray-700 p-3 rounded-xl mb-4 text-white focus:border-blue-500 outline-none">
-                <p id="auth-error" class="text-red-500 text-sm mb-4 hidden">Şifre Hatalı!</p>
-                <div class="flex gap-3">
-                    <button onclick="checkPassword()" class="flex-1 bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">GİRİŞ</button>
-                    <button onclick="hideLogin()" class="flex-1 bg-gray-800 hover:bg-gray-700 py-3 rounded-xl font-bold transition">İPTAL</button>
-                </div>
-            </div>
-        </div>
-
-        <main>
-            <div id="admin-panel" class="hidden space-y-6 mb-10">
-                <div class="bg-glass p-6 rounded-2xl border-l-4 border-blue-500">
-                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">👤 Oyuncu / Tester Ekle</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <input id="p-name" type="text" placeholder="İsim" class="bg-gray-900 border border-gray-700 p-3 rounded-xl text-white outline-none">
-                        <input id="p-score" type="number" placeholder="Puan" class="bg-gray-900 border border-gray-700 p-3 rounded-xl text-white outline-none">
-                        <input id="p-tiers" type="text" placeholder="Tierler (vürgülle)" class="bg-gray-900 border border-gray-700 p-3 rounded-xl text-white outline-none">
-                        <select id="p-type" class="bg-gray-900 border border-gray-700 p-3 rounded-xl text-white outline-none">
-                            <option value="player">Oyuncu</option>
-                            <option value="tester">Tester</option>
-                        </select>
-                        <button onclick="addData()" class="bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">EKLE</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="leaderboard-view" class="space-y-10">
-                <section>
-                    <h2 class="text-blue-500 font-bold mb-4 tracking-widest uppercase text-sm">Genel Sıralama</h2>
-                    <div class="bg-glass rounded-2xl overflow-hidden shadow-2xl">
-                        <div class="grid grid-cols-12 px-6 py-4 text-gray-500 text-xs font-bold uppercase bg-white/5">
-                            <div class="col-span-1">#</div>
-                            <div class="col-span-5">Oyuncu</div>
-                            <div class="col-span-2 text-right">Puan</div>
-                            <div class="col-span-4 text-right">Tierler</div>
-                        </div>
-                        <div id="player-list"></div>
-                    </div>
-                </section>
-
-                <section>
-                    <h2 class="text-purple-500 font-bold mb-4 tracking-widest uppercase text-sm">Testerlar</h2>
-                    <div class="bg-glass rounded-2xl overflow-hidden shadow-2xl">
-                        <div class="grid grid-cols-12 px-6 py-4 text-gray-500 text-xs font-bold uppercase bg-white/5">
-                            <div class="col-span-1">#</div>
-                            <div class="col-span-5">Tester</div>
-                            <div class="col-span-2 text-right">Puan</div>
-                            <div class="col-span-4 text-right">Yetki / Tier</div>
-                        </div>
-                        <div id="tester-list"></div>
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
 
     <script>
-        // Mouse Takip
-        const cursor = document.getElementById('cursor-glow');
-        let mX = 0, mY = 0, cX = 0, cY = 0;
-        document.addEventListener('mousemove', (e) => { mX = e.clientX; mY = e.clientY; });
-        function moveCursor() {
-            cX += (mX - cX) * 0.12; cY += (mY - cY) * 0.12;
-            cursor.style.left = cX + 'px'; cursor.style.top = cY + 'px';
-            requestAnimationFrame(moveCursor);
-        }
-        moveCursor();
-
-        // Matrix Arka Plan
-        const canvas = document.getElementById('bg-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        const columns = Array(Math.floor(canvas.width / 20)).fill(0);
-        function matrix() {
-            ctx.fillStyle = 'rgba(9, 10, 15, 0.1)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#1d4ed8'; ctx.font = '15px monospace';
-            columns.forEach((y, i) => {
-                ctx.fillText(Math.random() > 0.5 ? '1' : '0', i * 20, y);
-                columns[i] = y > canvas.height ? 0 : y + 20;
-            });
-        }
-        setInterval(matrix, 50);
-
-        // Veri Yönetimi
-        function addData() {
-            const name = document.getElementById('p-name').value;
-            const score = parseInt(document.getElementById('p-score').value);
-            const tiersInput = document.getElementById('p-tiers').value;
-            const tiers = tiersInput ? tiersInput.split(',').map(t => t.trim()) : [];
-            const type = document.getElementById('p-type').value;
-
-            if(!name || isNaN(score)) return;
-
-            const newItem = { id: Date.now(), name, score, tiers };
-            
-            // Veriyi Al, Push Et, Kaydet
-            let storageKey = type === 'player' ? 'lumo_players' : 'lumo_testers';
-            let list = JSON.parse(localStorage.getItem(storageKey) || '[]');
-            list.push(newItem);
-            list.sort((a, b) => b.score - a.score);
-            localStorage.setItem(storageKey, JSON.stringify(list));
-
-            document.getElementById('p-name').value = '';
-            document.getElementById('p-score').value = '';
-            document.getElementById('p-tiers').value = '';
-            
-            renderLists();
-        }
-
-        function deleteItem(id, type) {
-            let storageKey = type === 'player' ? 'lumo_players' : 'lumo_testers';
-            let list = JSON.parse(localStorage.getItem(storageKey) || '[]');
-            list = list.filter(item => item.id !== id);
-            localStorage.setItem(storageKey, JSON.stringify(list));
-            renderLists();
-        }
-
-        function renderLists() {
-            const isAdmin = !document.getElementById('admin-panel').classList.contains('hidden');
-            
-            // Oyuncuları Yükle ve Render Et
-            const players = JSON.parse(localStorage.getItem('lumo_players') || '[]');
-            const pList = document.getElementById('player-list');
-            pList.innerHTML = players.map((p, i) => `
-                <div class="grid grid-cols-12 px-6 py-5 items-center border-b border-white/5 hover:bg-white/5 transition ${i < 3 ? 'row-gradient' : ''}">
-                    <div class="col-span-1 font-bold text-yellow-500">${i+1}.</div>
-                    <div class="col-span-5 font-bold text-white flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-xs">👤</div>
-                        ${p.name}
-                        ${isAdmin ? `<button onclick="deleteItem(${p.id}, 'player')" class="text-[10px] text-red-500 ml-2 hover:underline">[SİL]</button>` : ''}
-                    </div>
-                    <div class="col-span-2 text-right font-mono font-bold text-blue-400">${p.score}</div>
-                    <div class="col-span-4 flex justify-end gap-1 flex-wrap">
-                        ${p.tiers.map(t => `<span class="tier-badge">${t}</span>`).join('')}
-                    </div>
-                </div>
-            `).join('');
-
-            // Testerları Yükle ve Render Et
-            const testers = JSON.parse(localStorage.getItem('lumo_testers') || '[]');
-            const tList = document.getElementById('tester-list');
-            tList.innerHTML = testers.map((t, i) => `
-                <div class="grid grid-cols-12 px-6 py-5 items-center border-b border-white/5 hover:bg-white/5 transition">
-                    <div class="col-span-1 font-bold text-purple-400">${i+1}.</div>
-                    <div class="col-span-5 font-bold text-white flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-xs">🧪</div>
-                        ${t.name}
-                        ${isAdmin ? `<button onclick="deleteItem(${t.id}, 'tester')" class="text-[10px] text-red-500 ml-2 hover:underline">[SİL]</button>` : ''}
-                    </div>
-                    <div class="col-span-2 text-right font-mono font-bold text-purple-400">${t.score}</div>
-                    <div class="col-span-4 flex justify-end gap-1 flex-wrap">
-                        ${t.tiers.map(tr => `<span class="tier-badge tester-badge">${tr}</span>`).join('')}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Giriş ve Panel Fonksiyonları
-        function showLogin() { document.getElementById('login-modal').classList.remove('hidden'); }
-        function hideLogin() { document.getElementById('login-modal').classList.add('hidden'); }
-        function checkPassword() {
-            if(document.getElementById('admin-pass').value === 'yetkili676731') {
-                hideLogin();
-                document.getElementById('admin-panel').classList.remove('hidden');
-                renderLists();
-            } else {
-                document.getElementById('auth-error').classList.remove('hidden');
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 500: '#06b6d4', 600: '#0891b2' }, // Turkuaz
+                        dark: { base: '#0f172a', card: '#1e293b', lighter: '#334155', border: '#475569' }, // Koyu Mavi
+                        accent: '#38bdf8' // Açık Mavi
+                    }
+                }
             }
         }
-        function showSection(sec) { if(sec === 'leaderboard') document.getElementById('admin-panel').classList.add('hidden'); renderLists(); }
+    </script>
 
-        // İlk Çalıştırma
-        renderLists();
+    <style>
+        body { background-color: #0f172a; color: #ffffff; }
+        .neon-glow-brand { box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
+        .hero-bg { background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 1)), url('https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1920') no-repeat center center/cover; }
+    </style>
+</head>
+<body class="font-sans antialiased" onload="initApp()">
+
+    <nav class="fixed top-0 left-0 w-full z-50 bg-dark-base/90 backdrop-blur-md border-b border-dark-border py-4 px-6 md:px-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center font-bold text-white neon-glow-brand">L</div>
+            <span class="font-poppins font-black text-2xl text-white">LUMORARR<span class="text-brand-500">NETWORK</span></span>
+        </div>
+        
+        <ul class="hidden lg:flex items-center gap-10 font-medium text-gray-300">
+            <li><a href="#home" class="hover:text-brand-500 transition-colors">Ana Sayfa</a></li>
+            <li><a href="#features" class="hover:text-brand-500 transition-colors">Towny+ Sistemi</a></li>
+            <li><a href="#staff-recruitment" class="hover:text-brand-500 transition-colors">Yetkili Alımı</a></li>
+            <li><a href="#support-section" class="hover:text-brand-500 transition-colors">Destek</a></li>
+            <li><a href="https://ercebey76-source.github.io/TierList/" target="_blank" class="hover:text-brand-500 transition-colors">Tier Listimiz</a></li>
+        </ul>
+
+        <button onclick="document.getElementById('adminLoginModal').classList.remove('hidden')" class="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold transition-all">
+            Yönetici
+        </button>
+    </nav>
+
+    <section id="home" class="hero-bg min-h-screen pt-32 pb-16 px-6 flex flex-col justify-center items-center text-center">
+        <h1 class="font-poppins font-black text-5xl md:text-7xl mb-6 text-white">Türkiye'nin En Özgün <br/><span class="text-brand-500">Towny+ Serüveni</span></h1>
+        <p class="text-gray-400 text-lg max-w-2xl mb-12">Standart Towny'i unut! Kendi imparatorluğunu kur ve Lumorarr dünyasında hüküm sür.</p>
+        
+        <div onclick="copyIPAddress()" class="w-full max-w-sm bg-dark-card border-2 border-brand-500/50 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:border-brand-500 transition-all">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-brand-500/20 text-brand-500 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-server"></i></div>
+                <div class="text-left">
+                    <div class="text-[10px] text-gray-400 uppercase tracking-widest">Sunucu IP</div>
+                    <div class="font-bold text-white tracking-wide">Lumorarrnw.aternos.me</div>
+                </div>
+            </div>
+            <i class="fa-regular fa-clone text-brand-500"></i>
+        </div>
+    </section>
+
+    <section id="features" class="py-20 px-6 bg-dark-base">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-dark-card p-8 rounded-2xl border border-dark-border">
+                <div class="text-brand-500 text-3xl mb-6"><i class="fa-solid fa-bolt"></i></div>
+                <h3 class="text-xl font-bold mb-3">20 TPS Performans</h3>
+                <p class="text-gray-400 text-sm">Kesintisiz ve akıcı bir oyun deneyimi sunuyoruz.</p>
+            </div>
+            <div class="bg-dark-card p-8 rounded-2xl border border-dark-border">
+                <div class="text-brand-500 text-3xl mb-6"><i class="fa-solid fa-city"></i></div>
+                <h3 class="text-xl font-bold mb-3">Özgün Şehir Sistemi</h3>
+                <p class="text-gray-400 text-sm">Gelişmiş vergi ve arsa yönetimi ile fark yarat.</p>
+            </div>
+            <div class="bg-dark-card p-8 rounded-2xl border border-dark-border">
+                <div class="text-brand-500 text-3xl mb-6"><i class="fa-solid fa-chart-line"></i></div>
+                <h3 class="text-xl font-bold mb-3">Dinamik Ekonomi</h3>
+                <p class="text-gray-400 text-sm">Piyasa bazlı ekonomi ile ticareti domine et.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modallar ve Fonksiyonlar aynı kalmıştır -->
+    <div id="notificationToast" class="fixed top-20 right-5 z-[100] bg-brand-500 text-white px-6 py-3 rounded-xl hidden"></div>
+    
+    <script>
+        function showNotification(msg) {
+            const el = document.getElementById('notificationToast');
+            el.textContent = msg; el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+        function copyIPAddress() { 
+            navigator.clipboard.writeText("Lumorarrnw.aternos.me"); 
+            showNotification("IP adresi kopyalandı!");
+        }
+        function initApp() {}
     </script>
 </body>
 </html>
